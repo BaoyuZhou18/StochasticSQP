@@ -23,7 +23,7 @@ options.addIntegerOption(reporter,'termination_test_number',-1,-inf,inf);
 
 
 % Add double options
-options.addDoubleOption(reporter,'cpu_time_limit',1800,0,inf);
+options.addDoubleOption(reporter,'cpu_time_limit',18000,0,inf);
 options.addDoubleOption(reporter,'merit_parameter_initial',1e-01,0,inf);
 options.addDoubleOption(reporter,'scale_factor_gradient_limit',1e+02,0,inf);
 options.addDoubleOption(reporter,'feasibility_tolerance',1e-06,0,inf);

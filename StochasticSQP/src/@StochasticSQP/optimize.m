@@ -22,6 +22,10 @@ S.strategies_.initialize(S.options_,S.quantities_,S.reporter_);
 % Print header
 S.printHeader(problem);
 
+% store function value by iterations
+func = [];
+feas = [];
+
 % Main loop
 while true
     
@@ -31,13 +35,13 @@ while true
     % Print iteration quantities
     S.quantities_.printIterationValues(S.reporter_);
     
-    % Check for termination of best iterate
-    if S.quantities_.bestIterate.constraintNormInf(S.quantities_) <= S.quantities_.feasibilityTolerance
-        if S.quantities_.bestIterate.stationarityMeasure(S.quantities_,'true') <= S.quantities_.stationarityTolerance
-            S.status_ = Enumerations.S_SUCCESS;
-            break;
-        end
-    end
+%     % Check for termination of best iterate
+%     if S.quantities_.bestIterate.constraintNormInf(S.quantities_) <= S.quantities_.feasibilityTolerance
+%         if S.quantities_.bestIterate.stationarityMeasure(S.quantities_,'true') <= S.quantities_.stationarityTolerance
+%             S.status_ = Enumerations.S_SUCCESS;
+%             break;
+%         end
+%     end
     
     % Check for CPU time termination
     if S.quantities_.CPUTime >= S.quantities_.CPUTimeLimit
@@ -100,6 +104,10 @@ while true
     % Print stepsize values
     S.strategies_.stepsizeComputation.printIterationValues(S.quantities_,S.reporter_);
     
+    % Add more information to func
+    func = [func S.quantities_.currentIterate.objectiveFunction(S.quantities_)];
+    feas = [feas S.quantities_.currentIterate.constraintNormInf(S.quantities_)];
+    
     % Update current iterate to trial iterate
     S.quantities_.updateIterate;
     
@@ -116,5 +124,7 @@ S.reporter_.printf(Enumerations.R_SOLVER,Enumerations.R_PER_ITERATION,'\n');
 
 % Print footer
 S.printFooter;
+
+save(sprintf('/Users/baoyuzhou/Desktop/Software/SCO/output/func.mat'),'func','feas');
 
 end % optimize

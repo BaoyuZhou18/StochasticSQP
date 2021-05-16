@@ -107,13 +107,14 @@ classdef StochasticSQP < handle
     end % reporter
     
     % Solution (best)
-    function [x,yE,yI,infeasibility,stationarity] = solution(S)
+    function [x,yE,yI,infeasibility,stationarity,objective] = solution(S)
       
       % Set return values
       x = S.quantities_.bestIterate.primalPoint;
       [yE,yI] = S.quantities_.bestIterate.multipliers('stochastic');
       infeasibility = S.quantities_.bestIterate.constraintNormInf(S.quantities_);
       stationarity = S.quantities_.bestIterate.stationarityMeasure(S.quantities_,'true');
+      objective = S.quantities_.bestIterate.objectiveFunction(S.quantities_);
 
     end % solution
     

@@ -36,6 +36,15 @@ if eigs(quantities.currentIterate.constraintJacobianEqualities(quantities) * qua
     return
 end
 
+% Normal step computation by using cg
+
+
+
+
+% Tangential step computation by using external iterative solver
+
+
+
 if quantities.checkStationarityMeasure
     % Compute exact direction with the true gradient
     v_true = -matrix \ [quantities.currentIterate.objectiveGradient(quantities,'true');

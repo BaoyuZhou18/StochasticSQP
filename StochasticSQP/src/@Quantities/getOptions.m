@@ -29,5 +29,7 @@ Q.Progress_ratio_ = options.getOption(reporter,'progress_ratio');
 Q.Comparison_ratio_ = options.getOption(reporter,'comparison_ratio');
 Q.termination_test_number_ = options.getOption(reporter,'termination_test_number');
 Q.batch_size_ = options.getOption(reporter,'batch_size');
+Q.stepsize_scaling_ = options.getOption(reporter,'stepsize_scaling');
+Q.stepsize_diminishing_ = options.getOption(reporter,'stepsize_diminishing');
 
 end % getOptions

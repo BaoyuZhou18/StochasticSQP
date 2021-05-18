@@ -19,7 +19,7 @@ if D.use_hessian_of_lagrangian_
         quantities.currentIterate.constraintJacobianEqualities(quantities) sparse(quantities.currentIterate.numberOfConstraintsEqualities,quantities.currentIterate.numberOfConstraintsEqualities)];
     factor = D.curvature_threshold_;
     while 1
-        if max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0 || sum(eig(matrix) >= D.curvature_threshold_) >= quantities.currentIterate.numberOfVariables, break; end
+        if max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0 || sum(eig(matrix) >= 2 * D.curvature_threshold_) >= quantities.currentIterate.numberOfVariables, break; end
         matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) = ...
             matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) + factor * speye(quantities.currentIterate.numberOfVariables,quantities.currentIterate.numberOfVariables);
         factor = factor * 10;
@@ -30,43 +30,48 @@ else
 end
 
 % Check whether LICQ holds
-if eigs(quantities.currentIterate.constraintJacobianEqualities(quantities) * quantities.currentIterate.constraintJacobianEqualities(quantities)',1,'sm') < D.curvature_threshold_ || max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0
+if eigs(quantities.currentIterate.constraintJacobianEqualities(quantities) * quantities.currentIterate.constraintJacobianEqualities(quantities)',1,'sm') < 2 * D.curvature_threshold_ || max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0
     err = true;
     fprintf('Violation of LICQ or second-order sufficiency!!! \n');
     return
 end
 
+addpath('/Users/baoyuzhou/Desktop/Software/StochasticSQP/StochasticSQP/external');
+
 % Normal step computation by using cg
-
-
-
+v = cg(quantities.currentIterate.constraintJacobianEqualities(quantities)' * quantities.currentIterate.constraintJacobianEqualities(quantities) , -quantities.currentIterate.constraintJacobianEqualities(quantities)' * quantities.currentIterate.constraintFunctionEqualities(quantities), sparse(quantities.currentIterate.numberOfVariables,1), D.full_residual_norm_factor_);
+Hv = matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) * v;
 
 % Tangential step computation by using external iterative solver
-
-
-
+% Exact solution
 if quantities.checkStationarityMeasure
     % Compute exact direction with the true gradient
-    v_true = -matrix \ [quantities.currentIterate.objectiveGradient(quantities,'true');
-        quantities.currentIterate.constraintFunctionEqualities(quantities)];
+    u_dual_true = -matrix \ [quantities.currentIterate.objectiveGradient(quantities,'true') + Hv;
+        sparse(quantities.currentIterate.numberOfConstraintsEqualities,1)];
     
     % Set true multipliers
-    quantities.currentIterate.setMultipliers(v_true(quantities.currentIterate.numberOfVariables+1:end),sparse([]),'true');
+    quantities.currentIterate.setMultipliers(u_dual_true(quantities.currentIterate.numberOfVariables+1:end),sparse([]),'true');
 end
 
+% Inexact solution
 [current_multipliers , ~] = quantities.currentIterate.multipliers('stochastic');
 previousIterateMeasure = norm([quantities.previousIterate.objectiveGradient(quantities,'stochastic') + quantities.previousIterate.constraintJacobianEqualities(quantities)' * current_multipliers ; quantities.previousIterate.constraintFunctionEqualities(quantities)]);
 currentIterateInfo = [quantities.currentIterate.objectiveGradient(quantities,'stochastic') + quantities.currentIterate.constraintJacobianEqualities(quantities)' * current_multipliers; quantities.currentIterate.constraintFunctionEqualities(quantities)];
 currentIterateMeasure = norm(currentIterateInfo);
-c_norm1 = norm(quantities.currentIterate.constraintFunctionEqualities(quantities),1);
-c_norm2 = norm(quantities.currentIterate.constraintFunctionEqualities(quantities));
+c_norm2 = quantities.currentIterate.constraintNorm2(quantities);
+vector = [quantities.currentIterate.objectiveGradient(quantities,'stochastic') + quantities.currentIterate.constraintJacobianEqualities(quantities)' * current_multipliers + Hv; sparse(quantities.currentIterate.numberOfConstraintsEqualities,1)];
+g_Hv = quantities.currentIterate.objectiveGradient(quantities,'stochastic') + Hv;
 
-addpath('/Users/baoyuzhou/Desktop/Software/StochasticSQP/StochasticSQP/external');
+% Set scaling
+stepsize_scaling = quantities.stepsizeScaling;
+if quantities.stepsizeDiminishing == true
+    stepsize_scaling = stepsize_scaling / quantities.iterationCounter;
+end
 
 % Inexact solve by iterative solver
-[v,TTnum,residual,innerIter] = minres_stanford(matrix, -currentIterateInfo, quantities.currentIterate.numberOfVariables, currentIterateMeasure, previousIterateMeasure, c_norm1, c_norm2, ...
-    D.full_residual_norm_factor_, D.primal_residual_norm_factor_, D.dual_residual_norm_factor_, D.constraint_norm_factor_, D.lagrangian_primal_norm_factor_, ...
-    D.curvature_threshold_, D.model_reduction_factor_, quantities.currentIterate.objectiveGradient(quantities,'stochastic'), quantities.meritParameter, ...
+[u_delta,v,TTnum,residual,innerIter] = minres_stanford(matrix, -vector, quantities.currentIterate.constraintFunctionEqualities(quantities), v, g_Hv, quantities.currentIterate.numberOfVariables, currentIterateMeasure, previousIterateMeasure, c_norm2, stepsize_scaling * D.primal_residual_relative_factor_, stepsize_scaling * D.dual_residual_relative_factor_, ...
+    D.full_residual_norm_factor_, D.constraint_norm_factor_, D.normal_tangential_relative_factor_, D.normal_progress_factor_, ...
+    D.curvature_threshold_, D.normal_threshold_, D.model_reduction_factor_, quantities.currentIterate.objectiveGradient(quantities,'stochastic'), quantities.meritParameter, ...
     quantities.currentIterate.constraintJacobianEqualities(quantities),[],0,false,true,max(size(matrix,1)*100,100),1e-10);
 
 % Set Termination Test Number
@@ -79,6 +84,7 @@ if TTnum < 0
 end
 
 % Transform dense to sparse format
+u_delta = sparse(u_delta);
 v = sparse(v);
 residual = sparse(residual);
 
@@ -88,18 +94,19 @@ quantities.setIterativeSolverCounter(innerIter);
 % Increment inner iteration counter
 quantities.incrementInnerIterationCounter(innerIter);
 
+% Set primal search direction
+d = u_delta(1:quantities.currentIterate.numberOfVariables) + v;
+quantities.setDirectionPrimal(d);
+
 % Set residual
 quantities.setPrimalResidual(residual(1:quantities.currentIterate.numberOfVariables));
 quantities.setDualResidual(residual(quantities.currentIterate.numberOfVariables+1:end));
-quantities.setDualResidualNorm1(norm(residual(quantities.currentIterate.numberOfVariables+1:end),1));
-
-% Set direction
-quantities.setDirectionPrimal(v(1:quantities.currentIterate.numberOfVariables));
+quantities.setDualResidualNorm2(norm(quantities.currentIterate.constraintFunctionEqualities(quantities) + quantities.currentIterate.constraintJacobianEqualities(quantities) * d));
 
 % Set curvature
-quantities.setCurvature(v(1:quantities.currentIterate.numberOfVariables)' * matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) * v(1:quantities.currentIterate.numberOfVariables));
+quantities.setCurvature(u_delta(1:quantities.currentIterate.numberOfVariables)' * matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) * u_delta(1:quantities.currentIterate.numberOfVariables));
 
 % Set multiplier
-quantities.currentIterate.setMultipliers(current_multipliers + v(quantities.currentIterate.numberOfVariables+1:end),[],'stochastic');
+quantities.currentIterate.setMultipliers(current_multipliers + u_delta(quantities.currentIterate.numberOfVariables+1:end),[],'stochastic');
 
 end % computeDirection

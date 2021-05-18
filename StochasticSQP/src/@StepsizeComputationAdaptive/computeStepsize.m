@@ -8,8 +8,8 @@
 function computeStepsize(S,options,quantities,reporter,strategies)
 
 % Set scaling
-stepsize_scaling = S.stepsize_scaling_;
-if S.stepsize_diminishing_ == true
+stepsize_scaling = quantities.stepsizeScaling;
+if quantities.stepsizeDiminishing == true
     stepsize_scaling = stepsize_scaling / quantities.iterationCounter;
 end
 
@@ -24,7 +24,7 @@ else
     % Compute preliminary values
     denominator = (quantities.meritParameter * quantities.objectiveLipschitzConstants + quantities.constraintLipschitzConstants) * norm(quantities.directionPrimal)^2;
     alpha_hat = stepsize_scaling * quantities.modelReduction / denominator;
-    alpha_tilde = alpha_hat - 2 * quantities.currentIterate.constraintNorm1 / denominator;
+    alpha_tilde = alpha_hat - 2 * quantities.currentIterate.constraintNorm2 / denominator;
     alpha_opt = max(min(alpha_hat,1) , alpha_tilde);
     alpha_1 = min(min(alpha_opt,1) , 2 * (1 - S.sufficient_decrease_) * stepsize_scaling * quantities.modelReduction / denominator);
     
@@ -38,9 +38,9 @@ else
                 alpha_ext = S.lengthening_ratio_ * alpha_1;
                 
                 Ufunc = alpha_ext * (S.sufficient_decrease_ - 1) * stepsize_scaling * quantities.modelReduction ...
-                    + norm(alpha_ext * quantities.residualDual + (1 - alpha_ext) * quantities.currentIterate.constraintFunctionEqualities(quantities),1) ...
-                    - norm(quantities.currentIterate.constraintFunctionEqualities(quantities),1) ...
-                    + alpha_ext * (norm(quantities.currentIterate.constraintFunctionEqualities(quantities),1) - quantities.residualDualNorm1) ...
+                    + norm(quantities.currentIterate.constraintFunctionEqualities(quantities) + alpha_ext * quantities.currentIterate.constraintJacobianEqualities(quantities) * quantities.directionPrimal) ...
+                    - quantities.currentIterate.constraintNorm2(quantities) ...
+                    + alpha_ext * (quantities.currentIterate.constraintNorm2(quantities) - quantities.residualDualNorm2) ...
                     + 0.5 * alpha_ext^2 * denominator;
                 
                 if Ufunc > 0

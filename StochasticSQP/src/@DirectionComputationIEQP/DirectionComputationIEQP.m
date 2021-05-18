@@ -20,12 +20,17 @@ classdef DirectionComputationIEQP < DirectionComputation
     %%%%%%%%%%%
     use_hessian_of_lagrangian_
     full_residual_norm_factor_
-    primal_residual_norm_factor_
-    dual_residual_norm_factor_
+    % primal_residual_norm_factor_
+    % dual_residual_norm_factor_
     constraint_norm_factor_
-    lagrangian_primal_norm_factor_
+    % lagrangian_primal_norm_factor_
     curvature_threshold_
     model_reduction_factor_
+    primal_residual_relative_factor_
+    dual_residual_relative_factor_
+    normal_threshold_
+    normal_tangential_relative_factor_
+    normal_progress_factor_
     
   end % properties (private access)
   

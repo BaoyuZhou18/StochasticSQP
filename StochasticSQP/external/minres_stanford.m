@@ -1,6 +1,6 @@
-function [ x, TTnum, residual, itn ] = ...
-    minres_stanford( A, b, size_primal, CIM, PIM, c_norm1, c_norm2, kappa, mu_2, mu_1, theta_1, theta_2, ...
-    kappa_u, sigma, obj_grad, tau, Jacobian, M, shift, show, check, itnlim, rtol )
+function [ x, normal_step, TTnum, residual, itn ] = ...
+    minres_stanford( A, b, constraint_violation, normal_step, g_Hv, size_primal, CIM, PIM, c_norm2, primal_abs, dual_abs, kappa, epsilon_3, ...
+    epsilon_uv, epsilon_2, kappa_u, kappa_v, sigma, obj_grad, tau, Jacobian, M, shift, show, check, itnlim, rtol )
 
 
 %        [ x, istop, itn, rnorm, Arnorm, Anorm, Acond, ynorm ] = ...
@@ -292,34 +292,49 @@ if ~done                              % k = itn = 1 first time through
         if norm(residual,inf) <= max(kappa * normb, 1e-12)
             
             % Set updates
-            primal_update = x(1:size_primal);
+            primal_update = x(1:size_primal) + normal_step;
             dual_update = x(size_primal+1:end);
             primal_residual = residual(1:size_primal);
             dual_residual = residual(size_primal+1:end);
             
-            % Check whether model reduction condition holds...
-            Delta_q = -tau*(obj_grad'*primal_update + 0.5*max(primal_update'*A(1:size_primal,1:size_primal)*primal_update,kappa_u*norm(primal_update)^2)) + c_norm1 - norm(dual_residual,1);
-            
-            if Delta_q >= 0.5*tau*sigma*max(primal_update'*A(1:size_primal,1:size_primal)*primal_update,kappa_u*norm(primal_update)^2) + sigma*max(c_norm1 , norm(dual_residual,1) - c_norm1)
-                if norm(residual) <= kappa*min(CIM,PIM)
-                    TTnum = 1;
-                    return;
+            if norm(primal_residual) <= primal_abs && norm(dual_residual) <= dual_abs && norm(primal_residual) <= kappa*min(CIM,PIM)
+                
+                uHu = x(1:size_primal)'*A(1:size_primal,1:size_primal)*x(1:size_primal);
+                
+                if norm(x(1:size_primal)) <= epsilon_uv * norm(normal_step) || ( uHu >= kappa_u * norm(x(1:size_primal))^2 && g_Hv'*x(1:size_primal) + 0.5*uHu <= kappa_v * norm(normal_step))
+                    
+                    % Check whether model reduction condition holds...
+                    Delta_l = -tau*obj_grad'*primal_update + c_norm2 - norm(constraint_violation + A(size_primal+1:end,1:size_primal) * primal_update);
+                    
+                    c_Jv = constraint_violation + A(size_primal+1:end,1:size_primal) * normal_step;
+                    
+                    if Delta_l >= 0.5*tau*sigma*max(uHu,kappa_u*norm(x(1:size_primal))^2) + sigma*(c_norm2 - norm(c_Jv))
+                        TTnum = 1;
+                        return;
+                    end
+                    
+                    if c_norm2 - norm(c_Jv) > 0 && c_norm2 - norm(c_Jv + dual_residual) >= epsilon_2 * (c_norm2 - norm(c_Jv))
+                        TTnum = 2;
+                        return;
+                    end
+                    
                 end
+                
             end
             
-            if norm(dual_residual,1) <= mu_1 * c_norm1 && norm(primal_residual,1) <= mu_2 * c_norm1
-                TTnum = 2;
-                return;
-            end
+            g_Jy = -b(1:size_primal) - A(1:size_primal,1:size_primal) * normal_step;
             
-            if c_norm2 <= theta_1 * norm(-b(1:size_primal) + Jacobian'*dual_update)
-                if norm(-b(1:size_primal) + Jacobian'*dual_update) <= min(theta_2*norm(b(1:size_primal)) , kappa*PIM)
+            if c_norm2 <= epsilon_3 * norm(g_Jy + Jacobian'*dual_update)
+                if norm(g_Jy + Jacobian'*dual_update) <= kappa * min(norm(g_Jy), PIM)
                     TTnum = 3;
-                    x(1:size_primal) = zeros(size_primal,1);
-                    residual = A*x - b;
+                    x(1:size_primal) = sparse(size_primal,1);
+                    normal_step = sparse(size_primal,1);
+                    residual(1:size_primal) = g_Jy + Jacobian'*dual_update;
+                    residual(size_primal+1:end) = sparse(size(dual_update));
                     return;
                 end
             end
+            
             
         end
         

@@ -35,13 +35,13 @@ while true
     % Print iteration quantities
     S.quantities_.printIterationValues(S.reporter_);
     
-%     % Check for termination of best iterate
-%     if S.quantities_.bestIterate.constraintNormInf(S.quantities_) <= S.quantities_.feasibilityTolerance
-%         if S.quantities_.bestIterate.stationarityMeasure(S.quantities_,'true') <= S.quantities_.stationarityTolerance
-%             S.status_ = Enumerations.S_SUCCESS;
-%             break;
-%         end
-%     end
+    % Check for termination of best iterate
+    if S.quantities_.bestIterate.constraintNormInf(S.quantities_) <= S.quantities_.feasibilityTolerance
+        if S.quantities_.bestIterate.stationarityMeasure(S.quantities_,'true') <= S.quantities_.stationarityTolerance
+            S.status_ = Enumerations.S_SUCCESS;
+            break;
+        end
+    end
     
     % Check for CPU time termination
     if S.quantities_.CPUTime >= S.quantities_.CPUTimeLimit
@@ -64,15 +64,15 @@ while true
         break;
     end
     
-    % Check for termination on inner iteration limit when necessary
-    switch S.options_.getOption(S.reporter_,'direction_computation')
-        case 'IEQP'
-            if S.quantities_.innerIterationCounter >= S.quantities_.innerIterationRelativeLimit * ...
-                    (S.quantities_.currentIterate.numberOfVariables + S.quantities_.currentIterate.numberOfConstraintsEqualities + S.quantities_.currentIterate.numberOfConstraintsInequalities)
-                S.status_ = Enumerations.S_ITERATION_LIMIT;
-                break;
-            end
-    end
+%     % Check for termination on inner iteration limit when necessary
+%     switch S.options_.getOption(S.reporter_,'direction_computation')
+%         case 'IEQP'
+%             if S.quantities_.innerIterationCounter >= S.quantities_.innerIterationRelativeLimit * ...
+%                     (S.quantities_.currentIterate.numberOfVariables + S.quantities_.currentIterate.numberOfConstraintsEqualities + S.quantities_.currentIterate.numberOfConstraintsInequalities)
+%                 S.status_ = Enumerations.S_ITERATION_LIMIT;
+%                 break;
+%             end
+%     end
     
     % Compute search direction (sets direction)
     err = S.strategies_.directionComputation.computeDirection(S.options_,S.quantities_,S.reporter_,S.strategies_);

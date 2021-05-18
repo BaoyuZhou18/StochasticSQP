@@ -13,5 +13,6 @@ M.quadratic_model_ = options.getOption(reporter,'MCMR_quadratic_model');
 M.curvature_threshold_ = options.getOption(reporter,'MCMR_curvature_threshold');
 M.model_reduction_factor_ = options.getOption(reporter,'MCMR_model_reduction_factor');
 M.parameter_reduction_factor_ = options.getOption(reporter,'MCMR_parameter_reduction_factor');
+M.normal_progress_factor_ = options.getOption(reporter,'MCMR_normal_progress_factor');
 
 end % getOptions

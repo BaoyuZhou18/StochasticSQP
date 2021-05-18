@@ -23,6 +23,7 @@ classdef MeritParameterComputationModelReduction < MeritParameterComputation
     curvature_threshold_
     model_reduction_factor_
     parameter_reduction_factor_
+    normal_progress_factor_
             
   end % properties (private access)
   

@@ -44,6 +44,7 @@ classdef Point < handle
     g_norm1
     g_normInf
     c_norm1
+    c_norm2
     c_normInf
     c_normInf_unscaled
     
@@ -68,6 +69,7 @@ classdef Point < handle
     g_norm1_evaluated = false
     g_normInf_evaluated = false
     c_norm1_evaluated = false
+    c_norm2_evaluated = false
     c_normInf_evaluated = false
     c_normInf_unscaled_evaluated = false
     scales_set = false
@@ -383,7 +385,7 @@ classdef Point < handle
       
     end % end constraintJacobianEqualities
     
-    % Constraint 2-norm
+    % Constraint 1-norm
     function v = constraintNorm1(P,quantities)
       
       % Check if norm evaluated
@@ -414,6 +416,38 @@ classdef Point < handle
       v = P.c_norm1;
       
     end % end constraintNorm1
+    
+    % Constraint 2-norm
+    function v = constraintNorm2(P,quantities)
+      
+      % Check if norm evaluated
+      if ~P.c_norm2_evaluated
+        
+        % Check if constraint function evaluated
+        if ~P.cE_evaluated
+          
+          % Evaluate constraint function, equalities
+          P.constraintFunctionEqualities(quantities);
+          
+        end
+        
+        % Check if constraint function evaluated
+        if ~P.cI_evaluated
+          
+          % Evaluate constraint function, inequalities
+          P.constraintFunctionInequalities(quantities);
+          
+        end
+        
+        % Evaluate norm
+        P.c_norm2 = norm([P.cE; max(P.cI,0)]);
+        
+      end
+      
+      % Set return value
+      v = P.c_norm2;
+      
+    end % end constraintNorm2
 
     % Constraint inf-norm
     function v = constraintNormInf(P,quantities)
@@ -752,7 +786,7 @@ classdef Point < handle
         
     end % end objectiveGradient
     
-    % Objective gradient 2-norm
+    % Objective gradient 1-norm
     function v = objectiveGradientNorm1(P,quantities)
       
       % Check if norm evaluated

@@ -10,6 +10,7 @@ function addOptions(options,reporter)
 % Add bool options
 options.addBoolOption(reporter,'scale_problem',true);
 options.addBoolOption(reporter,'compute_iterate_stationarity',true);
+options.addBoolOption(reporter,'stepsize_diminishing',false);
 
 % Add integer options
 options.addIntegerOption(reporter,'constraint_function_evaluation_limit',1e+03,0,inf);
@@ -34,5 +35,6 @@ options.addDoubleOption(reporter,'progress_ratio',1.005,0,inf);
 options.addDoubleOption(reporter,'comparison_ratio',3,0,inf);
 options.addDoubleOption(reporter,'inner_iteration_relative_limit',5e+02,0,inf);
 options.addDoubleOption(reporter,'batch_size',1,0,inf);
+options.addDoubleOption(reporter,'stepsize_scaling',1e+00,0,inf);
 
 end % addOptions

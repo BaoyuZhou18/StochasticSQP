@@ -14,7 +14,7 @@ function computeMeritParameter(M,options,quantities,reporter,strategies)
 
 % Compute objective model value
 objective_model_value = quantities.currentIterate.objectiveGradient(quantities,'stochastic')'*quantities.directionPrimal + ...
-    max(quantities.curvatureInfo, M.curvature_threshold_ * norm(quantities.directionPrimal)^2);
+    0.5 * max(quantities.curvatureInfo, M.curvature_threshold_ * norm(quantities.directionPrimal)^2);
 
 % Evaluate constraint violation norm
 if quantities.currentIterate.constraintNorm1 > 0.0 
@@ -26,7 +26,7 @@ if quantities.currentIterate.constraintNorm1 > 0.0
     if objective_model_value > 0.0 && (quantities.terminationTestNumber == -1 || quantities.terminationTestNumber == 2)
         
         % Update trial value
-        merit_parameter_trial = ((1 - M.model_reduction_factor_) * quantities.currentIterate.constraintNorm1 - quantities.residualDualNorm1) / objective_model_value;
+        merit_parameter_trial = ((1 - M.model_reduction_factor_ / M.normal_progress_factor_) * quantities.currentIterate.constraintNorm2 - quantities.residualDualNorm2) / objective_model_value;
         
     end
     
@@ -34,7 +34,7 @@ if quantities.currentIterate.constraintNorm1 > 0.0
     if quantities.meritParameter > merit_parameter_trial
         
         % Set merit parameter
-        quantities.setMeritParameter((1 - M.parameter_reduction_factor_) * merit_parameter_trial);
+        quantities.setMeritParameter(min((1 - M.parameter_reduction_factor_) * quantities.meritParameter, merit_parameter_trial));
         
     end
     
@@ -56,7 +56,7 @@ elseif M.linear_model_
     
     % Set model reduction
     quantities.setModelReduction(-quantities.meritParameter * quantities.currentIterate.objectiveGradient(quantities,'stochastic')'*quantities.directionPrimal + ...
-        quantities.currentIterate.constraintNorm1 - quantities.residualDualNorm1);
+        quantities.currentIterate.constraintNorm2 - quantities.residualDualNorm2);
     
 end
 
@@ -71,7 +71,7 @@ ratio_parameter_trial = quantities.modelReduction / (quantities.meritParameter *
 if quantities.ratioParameter > ratio_parameter_trial
   
   % Set ratio parameter
-  quantities.setRatioParameter((1 - M.parameter_reduction_factor_) * ratio_parameter_trial);
+  quantities.setRatioParameter(min((1 - M.parameter_reduction_factor_) * quantities.ratioParameter, ratio_parameter_trial));
   
 end
 

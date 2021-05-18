@@ -25,7 +25,7 @@ classdef Quantities < handle
     trial_iterate_
     primal_residual_
     dual_residual_
-    dual_residual_norm1_
+    dual_residual_norm2_
     termination_test_number_
     
     
@@ -51,6 +51,8 @@ classdef Quantities < handle
     compute_iterate_stationarity_
     objective_Lipschitz_
     constraint_Lipschitz_
+    stepsize_scaling_
+    stepsize_diminishing_
     
     %%%%%%%%%%%%%%
     % TOLERANCES %
@@ -272,13 +274,13 @@ classdef Quantities < handle
         
     end % residualDual
     
-    % Residual, dual, norm1
-    function r_norm1 = residualDualNorm1(Q)
+    % Residual, dual, norm2
+    function r_norm2 = residualDualNorm2(Q)
        
         % Set return value
-        r_norm1 = Q.dual_residual_norm1_;
+        r_norm2 = Q.dual_residual_norm2_;
         
-    end % residualDuanNorm1
+    end % residualDuanNorm2
     
     % Termination test number
     function termination_test_number = terminationTestNumber(Q)
@@ -351,6 +353,22 @@ classdef Quantities < handle
       q = Q.model_reduction_;
       
     end % modelReduction
+    
+    % Stepsize diminishing
+    function d = stepsizeDiminishing(Q)
+        
+        % Set return value
+        d = Q.stepsize_diminishing_;
+        
+    end % stepsizeDiminishing
+    
+    % Stepsize scaling
+    function s = stepsizeScaling(Q)
+        
+        % Set return value
+        s = Q.stepsize_scaling_;
+        
+    end % stepsizeScaling
     
     % Objective function evaluation counter
     function f = objectiveFunctionEvaluationCounter(Q)
@@ -574,12 +592,12 @@ classdef Quantities < handle
     end %setDualResidual
     
     % Set residal, dual with 1-norm
-    function setDualResidualNorm1(Q,dual_residual_norm1)
+    function setDualResidualNorm2(Q,dual_residual_norm2)
        
         % Set primal residual
-        Q.dual_residual_norm1_ = dual_residual_norm1;
+        Q.dual_residual_norm2_ = dual_residual_norm2;
         
-    end %setDualResidualNorm1
+    end %setDualResidualNorm2
     
     % Set iterative solver counter
     function setIterativeSolverCounter(Q,iter)

@@ -47,7 +47,7 @@ while 1
 %   fprintf('%5d  %.4e  %.4e | ',k,norms.x,norms.r);
   
   % Check for termination
-  if norms.r <= e*max(norms.r0,1), break; end;
+  if norms.r <= max(e * norms.r0,1e-10), break; end;
   
   % Evaluate matrix-vector product
   Ap = A*p;

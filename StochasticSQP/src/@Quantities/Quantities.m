@@ -27,6 +27,7 @@ classdef Quantities < handle
     dual_residual_
     dual_residual_norm2_
     termination_test_number_
+    tangential_step_
     
     
     %%%%%%%%%%%%
@@ -466,6 +467,14 @@ classdef Quantities < handle
       
     end % trialIterate
     
+    % Tangential Step
+    function step = tangentialStep(Q)
+
+      % Set return value
+      step = Q.tangential_step_;
+
+    end % tangentialStep
+    
     % Objective Lipschitz constants
     function objectiveLipschitz = objectiveLipschitzConstants(Q)
         
@@ -574,6 +583,14 @@ classdef Quantities < handle
       Q.direction_dual_ = direction;
       
     end % setDirectionDual
+    
+    % Set tangential step
+    function setTangentialStep(Q,tangential)
+
+      % Set step
+      Q.tangential_step_ = tangential;
+
+    end % setTangentialStep
     
     % Set residal, primal
     function setPrimalResidual(Q,primal_residual)

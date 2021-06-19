@@ -304,11 +304,11 @@ if ~done                              % k = itn = 1 first time through
                 if norm(x(1:size_primal)) <= epsilon_uv * norm(normal_step) || ( uHu >= kappa_u * norm(x(1:size_primal))^2 && g_Hv'*x(1:size_primal) + 0.5*uHu <= kappa_v * norm(normal_step))
                     
                     % Check whether model reduction condition holds...
-                    Delta_l = -tau*obj_grad'*primal_update + c_norm2 - norm(constraint_violation + A(size_primal+1:end,1:size_primal) * primal_update);
+                    Delta_l = -tau*obj_grad'*primal_update + c_norm2 - norm(constraint_violation + Jacobian * primal_update);
                     
-                    c_Jv = constraint_violation + A(size_primal+1:end,1:size_primal) * normal_step;
+                    c_Jv = constraint_violation + Jacobian * normal_step;
                     
-                    if Delta_l >= 0.5*tau*sigma*max(uHu,kappa_u*norm(x(1:size_primal))^2) + sigma*(c_norm2 - norm(c_Jv))
+                    if Delta_l >= tau*sigma*max(uHu,kappa_u*norm(x(1:size_primal))^2) + sigma*(c_norm2 - norm(c_Jv))
                         TTnum = 1;
                         return;
                     end
@@ -330,7 +330,7 @@ if ~done                              % k = itn = 1 first time through
                     x(1:size_primal) = sparse(size_primal,1);
                     normal_step = sparse(size_primal,1);
                     residual(1:size_primal) = g_Jy + Jacobian'*dual_update;
-                    residual(size_primal+1:end) = sparse(size(dual_update));
+                    residual(size_primal+1:end) = sparse(size(dual_update,1),1);
                     return;
                 end
             end

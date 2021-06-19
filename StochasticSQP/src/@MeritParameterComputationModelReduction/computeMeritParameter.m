@@ -14,7 +14,7 @@ function computeMeritParameter(M,options,quantities,reporter,strategies)
 
 % Compute objective model value
 objective_model_value = quantities.currentIterate.objectiveGradient(quantities,'stochastic')'*quantities.directionPrimal + ...
-    0.5 * max(quantities.curvatureInfo, M.curvature_threshold_ * norm(quantities.directionPrimal)^2);
+    max(quantities.curvatureInfo, M.curvature_threshold_ * norm(quantities.tangentialStep)^2);
 
 % Evaluate constraint violation norm
 if quantities.currentIterate.constraintNorm1 > 0.0 
@@ -26,7 +26,7 @@ if quantities.currentIterate.constraintNorm1 > 0.0
     if objective_model_value > 0.0 && (quantities.terminationTestNumber == -1 || quantities.terminationTestNumber == 2)
         
         % Update trial value
-        merit_parameter_trial = ((1 - M.model_reduction_factor_ / M.normal_progress_factor_) * quantities.currentIterate.constraintNorm2 - quantities.residualDualNorm2) / objective_model_value;
+        merit_parameter_trial = (1 - M.model_reduction_factor_ / M.normal_progress_factor_) * (quantities.currentIterate.constraintNorm2 - quantities.residualDualNorm2) / objective_model_value;
         
     end
     

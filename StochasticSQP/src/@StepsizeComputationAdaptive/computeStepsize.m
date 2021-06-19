@@ -23,11 +23,8 @@ else
     
     % Compute preliminary values
     denominator = (quantities.meritParameter * quantities.objectiveLipschitzConstants + quantities.constraintLipschitzConstants) * norm(quantities.directionPrimal)^2;
-    alpha_hat = stepsize_scaling * quantities.modelReduction / denominator;
-    alpha_tilde = alpha_hat - 2 * quantities.currentIterate.constraintNorm2 / denominator;
-    alpha_opt = max(min(alpha_hat,1) , alpha_tilde);
-    alpha_1 = min(min(alpha_opt,1) , 2 * (1 - S.sufficient_decrease_) * stepsize_scaling * quantities.modelReduction / denominator);
-    
+    alpha_1 = min(1 , 2 * (1 - S.sufficient_decrease_) * stepsize_scaling * quantities.modelReduction / denominator);
+
     % Set projection bounds
     lower_bound = 2 * (1 - S.sufficient_decrease_) * stepsize_scaling * quantities.ratioParameter * quantities.meritParameter / (quantities.meritParameter * quantities.objectiveLipschitzConstants + quantities.constraintLipschitzConstants);
     upper_bound = lower_bound + S.projection_width_ * stepsize_scaling^2;
@@ -49,12 +46,11 @@ else
                     alpha_1 = alpha_ext;
                 end
             end
-            alpha_1 = min(alpha_1,1);
+            % alpha_1 = min(alpha_1,1);
         end
-        % Project values
-        alpha = max(lower_bound,min(alpha_1,upper_bound));
     end
-    
+    % Project values
+    alpha = max(lower_bound,min(alpha_1,upper_bound));
 end
 
 % Set stepsize

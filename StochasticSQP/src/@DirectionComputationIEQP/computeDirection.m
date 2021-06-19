@@ -17,29 +17,29 @@ assert(quantities.currentIterate.numberOfConstraintsInequalities == 0,'ComputeDi
 if D.use_hessian_of_lagrangian_
     matrix = [quantities.currentIterate.hessianOfLagrangian(quantities) quantities.currentIterate.constraintJacobianEqualities(quantities)';
         quantities.currentIterate.constraintJacobianEqualities(quantities) sparse(quantities.currentIterate.numberOfConstraintsEqualities,quantities.currentIterate.numberOfConstraintsEqualities)];
-    factor = D.curvature_threshold_;
-    while 1
-        if max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0 || sum(eig(matrix) >= 2 * D.curvature_threshold_) >= quantities.currentIterate.numberOfVariables, break; end
-        matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) = ...
-            matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) + factor * speye(quantities.currentIterate.numberOfVariables,quantities.currentIterate.numberOfVariables);
-        factor = factor * 10;
-    end
+%     factor = D.curvature_threshold_;
+%     while 1
+%         if max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0 || sum(eig(matrix) >= 2 * D.curvature_threshold_) >= quantities.currentIterate.numberOfVariables, break; end
+%         matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) = ...
+%             matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) + factor * speye(quantities.currentIterate.numberOfVariables,quantities.currentIterate.numberOfVariables);
+%         factor = factor * 10;
+%     end
 else
     matrix = [speye(quantities.currentIterate.numberOfVariables) quantities.currentIterate.constraintJacobianEqualities(quantities)';
         quantities.currentIterate.constraintJacobianEqualities(quantities) zeros(quantities.currentIterate.numberOfConstraintsEqualities,quantities.currentIterate.numberOfConstraintsEqualities)];
 end
 
-% Check whether LICQ holds
-if eigs(quantities.currentIterate.constraintJacobianEqualities(quantities) * quantities.currentIterate.constraintJacobianEqualities(quantities)',1,'sm') < 2 * D.curvature_threshold_ || max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0
-    err = true;
-    fprintf('Violation of LICQ or second-order sufficiency!!! \n');
-    return
-end
+% % Check whether LICQ holds
+% if eigs(quantities.currentIterate.constraintJacobianEqualities(quantities) * quantities.currentIterate.constraintJacobianEqualities(quantities)',1,'sm') < 2 * D.curvature_threshold_ || max(max(isnan(matrix))) > 0 || max(max(isinf(matrix))) > 0
+%     err = true;
+%     fprintf('Violation of LICQ or second-order sufficiency!!! \n');
+%     return
+% end
 
 addpath('/Users/baoyuzhou/Desktop/Software/StochasticSQP/StochasticSQP/external');
 
 % Normal step computation by using cg
-v = cg(quantities.currentIterate.constraintJacobianEqualities(quantities)' * quantities.currentIterate.constraintJacobianEqualities(quantities) , -quantities.currentIterate.constraintJacobianEqualities(quantities)' * quantities.currentIterate.constraintFunctionEqualities(quantities), sparse(quantities.currentIterate.numberOfVariables,1), D.full_residual_norm_factor_);
+v = cg(quantities.currentIterate.constraintJacobianEqualities(quantities)' * quantities.currentIterate.constraintJacobianEqualities(quantities) , -quantities.currentIterate.constraintJacobianEqualities(quantities)' * quantities.currentIterate.constraintFunctionEqualities(quantities), sparse(quantities.currentIterate.numberOfVariables,1), 1e-01);
 Hv = matrix(1:quantities.currentIterate.numberOfVariables,1:quantities.currentIterate.numberOfVariables) * v;
 
 % Tangential step computation by using external iterative solver
@@ -97,6 +97,7 @@ quantities.incrementInnerIterationCounter(innerIter);
 % Set primal search direction
 d = u_delta(1:quantities.currentIterate.numberOfVariables) + v;
 quantities.setDirectionPrimal(d);
+quantities.setTangentialStep(u_delta(1:quantities.currentIterate.numberOfVariables));
 
 % Set residual
 quantities.setPrimalResidual(residual(1:quantities.currentIterate.numberOfVariables));
